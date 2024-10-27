@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Three.js Polygon Extrusion</title>
+        <script src="https://cdn.tailwindcss.com"></script> <!-- Tailwind CSS -->
+        <style>
+            body {
+                margin: 0;
+                overflow: hidden; /* Prevent scrollbars */
+            }
+            canvas {
+                display: block;
+            }
+            .draw-cursor {
+        cursor: crosshair; /* Crosshair cursor for precision */
+    }
+        </style>
+    </head>
+    <body>
+        <!-- Navbar -->
+        <nav class="bg-gray-800 p-4 fixed top-0 left-0 w-full flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <!-- Logo Image -->
+                <img src="./logo.png" alt="Logo" class="h-30 w-70">
+                
+            </div>
+            <div class="space-x-4">
+                <button id="toggleDrawButton" 
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    Toggle Draw Mode
+                </button>
+                <button id="add-wall-btn" 
+                    class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                    Add Wall
+                </button>
+            </div>
+        </nav>
+    
+        <script type="module" src="./app.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+        <script src="https://threejs.org/examples/js/loaders/FontLoader.js"></script>
+    </body>
+    
+</html>

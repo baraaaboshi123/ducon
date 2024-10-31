@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'; // Adjust the path as necessary
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 // Now you can create a new instance of FontLoader
 const loader = new FontLoader();
@@ -11,6 +12,8 @@ let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHei
 let renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+let model = null;
+let isDragging = false;
 
 // Set up OrbitControls
 let controls = new OrbitControls(camera, renderer.domElement);
@@ -21,6 +24,7 @@ controls.enableZoom = true;
 // Set up a basic grid helper (size: 10, divisions: 10)
 let gridHelper = new THREE.GridHelper(50, 50);
 scene.add(gridHelper);
+const raycastPlane = new THREE.Plane(); // For raycasting
 
 // Create a plane to use for raycasting (at y=0 plane)
 let planeGeometry = new THREE.PlaneGeometry(100, 100);
@@ -32,7 +36,11 @@ scene.add(plane);
 // Set camera position
 camera.position.set(0, 5, 10);
 camera.lookAt(0, 0, 0);
+const objectPaths = [
+    { url: '/objects/00_Wood Pergola-4x6-Mordern-M0824.gltf', name: '00_Wood Pergola-4x6-Mordern-M0824', price: 12000, image: '/images/00_Wood Pergola-4x6-Mordern-M0824.png' },
+    { url: '/objects/00_Wood Pergola-4x6-Mordern-M0724.gltf', name: '00_Wood Pergola-4x6-Mordern-M0724', price: 10000, image: '/images/00_Wood Pergola-4x6-Mordern-M0724.png' }
 
+];
 let polygons = []; // Array to hold all polygons
 let currentPolygon = {
     points: [],
@@ -61,6 +69,244 @@ function addLine(start, end) {
     scene.add(line);
     currentPolygon.lines.push(line);  // Store the line for the current polygon
 }
+
+
+
+// objects section ----------------------------------------------------------------------------
+
+// Global array to store loaded models
+const loadedModels = [];
+// Load the GLTF model
+function loadModel(url, object) {
+    const loader = new GLTFLoader();
+    loader.load(url, (gltf) => {
+        model = gltf.scene;
+        model.position.set(-30, 0.1, -30);
+
+        scene.add(model);
+        loadedModels.push({ ...object, model })
+        console.log(loadedModels);
+    });
+}
+// Open the modal and populate with object data
+function openModal() {
+    const objectGrid = document.getElementById("objectGrid");
+    objectGrid.innerHTML = ""; // Clear existing content
+
+    objectPaths.forEach((object) => {
+        // Create container for each preview
+        const previewContainer = document.createElement("div");
+        previewContainer.classList.add("text-center");
+
+        // Image element for each object
+        const img = document.createElement("img");
+        img.src = object.image;
+        img.alt = object.name;
+        img.style.width = "150px";
+        img.style.height = "150px";
+        img.classList.add("mb-2", "cursor-pointer");
+
+        // Object label
+        const label = document.createElement("p");
+        label.textContent = `${object.name} - $${object.price}`;
+
+        // Event listener for loading model when clicking the image
+        img.addEventListener("click", () => {
+
+            loadModel(object.url, object)
+            closeModal()
+
+        });
+        // Append image and label to container
+        previewContainer.appendChild(img);
+        previewContainer.appendChild(label);
+        objectGrid.appendChild(previewContainer);
+    });
+
+    // Show modal
+    document.getElementById("objectModal").classList.remove("hidden");
+}
+
+// Function to close modal and cleanup images
+function closeModal() {
+    document.getElementById('objectModal').classList.add('hidden');
+    const objectGrid = document.getElementById("objectGrid");
+    objectGrid.innerHTML = ""; // Clear all content
+}
+
+
+
+// end objects section --------------------------------------------------------------------------
+
+//invoice section -------------------------------------------------------------------------------
+// Open the Invoice Modal and populate data
+function openInvoiceModal() {
+    const invoiceBody = document.getElementById("invoiceBody");
+    invoiceBody.innerHTML = ""; // Clear existing content
+
+    const date = new Date().toLocaleDateString();
+    document.getElementById("invoiceDate").textContent = date;
+
+    // Calculate quantities and prices
+    const itemMap = new Map();
+    loadedModels.forEach(({ name, price }) => {
+        if (!itemMap.has(name)) {
+            itemMap.set(name, { name, price, quantity: 1 });
+        } else {
+            itemMap.get(name).quantity += 1;
+        }
+    });
+
+    let totalInvoicePrice = 0;
+
+    // Populate table with combined items
+    itemMap.forEach(item => {
+        const row = document.createElement("tr");
+        row.classList.add("text-center");
+
+        // Calculate total price for each item
+        const itemTotalPrice = item.price * item.quantity;
+        totalInvoicePrice += itemTotalPrice;
+
+        row.innerHTML = `
+            <td class="p-2 border">${item.name}</td>
+            <td class="p-2 border">$${item.price}</td>
+            <td class="p-2 border">${item.quantity}</td>
+            <td class="p-2 border">$${itemTotalPrice.toFixed(2)}</td>
+        `;
+        invoiceBody.appendChild(row);
+    });
+    document.getElementById("invoiceDate").textContent = new Date().toLocaleDateString();
+
+    document.getElementById("totalPrice").textContent = totalInvoicePrice.toFixed(2);
+    document.getElementById("invoiceModal").classList.remove("hidden");
+}
+
+// Close the Invoice Modal
+document.getElementById("closeInvoiceModal").addEventListener("click", () => {
+    document.getElementById("invoiceModal").classList.add("hidden");
+});
+
+// open the Invoice Modal
+document.getElementById("poqBtn").addEventListener("click", () => {
+    openInvoiceModal()
+});
+
+function printInvoice() {
+    // Save the original body content
+    const originalContents = document.body.innerHTML;
+
+    // Get the content of the invoice modal
+    const printContents = document.getElementById("invoiceModal").innerHTML;
+
+    // Replace the body content with the invoice content
+    document.body.innerHTML = printContents;
+
+    // Add a print style to keep the background
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact; /* For Chrome */
+                print-color-adjust: exact; /* For Firefox */
+            }
+            /* Hide buttons or any specific elements during printing */
+            button, .no-print {
+                display: none !important;
+            }
+            /* Hide default headers and footers */
+            @page {
+                margin: 0; /* Remove default margins */
+            }
+            h1, h2, h3, h4, h5, h6, p, span {
+                page-break-inside: avoid; /* Prevent page breaks inside elements */
+            }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Print the content
+    window.print();
+
+    // Restore the original content
+    document.body.innerHTML = originalContents;
+}
+
+
+// print the Invoice Modal
+document.getElementById("printInvoice").addEventListener("click", () => {
+    printInvoice()
+    // Ensure page reloads properly after printing
+    window.onafterprint = () => location.reload();
+});
+
+
+
+//end invoice section ---------------------------------------------------------------------------
+
+
+// Get mouse position helper
+function getMousePosition1(event) {
+    const mouse = new THREE.Vector2();
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    return mouse;
+}
+
+// Handle pointer down (start drag)
+function onPointerDown(event) {
+    event.preventDefault();
+    if (!model) {
+        console.warn('Model is not loaded yet.'); // Log if model is not loaded
+        return; // Exit the function if the model is not loaded
+    }
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(getMousePosition1(event), camera);
+
+    // Check for intersection with the model
+    const intersects = raycaster.intersectObject(model, true); // true for recursive check
+    if (intersects.length > 0) {
+        isDragging = true;
+
+        // Set up raycast plane
+        const normal = new THREE.Vector3(0, 1, 0); // Upwards Y direction
+        const pointOnPlane = intersects[0].point; // Use the intersection point
+        raycastPlane.setFromNormalAndCoplanarPoint(normal, pointOnPlane);
+
+        // Disable orbit controls while dragging
+        controls.enableRotate = false; // Disable rotation
+    }
+}
+
+// Handle pointer up (end drag)
+function onPointerUp() {
+    isDragging = false;
+    controls.enableRotate = true; // Re-enable rotation
+}
+
+// Handle pointer move (dragging)
+function onPointerMove(event) {
+    if (!isDragging || !model) return;
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(getMousePosition1(event), camera);
+    const intersection = new THREE.Vector3();
+
+    // Update intersection with raycastPlane
+    if (raycaster.ray.intersectPlane(raycastPlane, intersection)) {
+        const newX = intersection.x;
+        const newZ = intersection.z;
+
+        // Update model position
+        model.position.set(newX, model.position.y, newZ); // Keep the original Y position of the model
+    }
+}
+
+// Add event listeners to handle pointer interactions
+window.addEventListener('pointerdown', onPointerDown);
+window.addEventListener('pointerup', onPointerUp);
+window.addEventListener('pointermove', onPointerMove);
 
 // Change the color of all lines to blue when the polygon is closed
 function changePolygonColor() {
@@ -140,7 +386,7 @@ function extrudePolygon() {
 
         // Load the texture
         const textureLoader = new THREE.TextureLoader();
-        textureLoader.load('./t1.png', function (texture) {
+        textureLoader.load('./public/images/t1.png', function (texture) {
             // Set texture wrapping and repeat
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
@@ -168,6 +414,8 @@ function extrudePolygon() {
 
             // Remove the arrow after extrusion
             scene.remove(currentPolygon.arrow);
+            isDrawing = false;
+            document.body.classList.remove("draw-cursor"); // Reset the cursor
         });
     }
 }
@@ -196,16 +444,8 @@ let isDrawing = false;
 // Button to toggle drawing mode
 const toggleDrawButton = document.getElementById('toggleDrawButton');
 toggleDrawButton.addEventListener('click', () => {
-    isDrawing = !isDrawing; // Toggle drawing state
-    if (isDrawing) {
-        document.body.classList.add("draw-cursor"); // Apply the cursor
-        toggleDrawButton.textContent = 'Disable Draw Mode'; // Update button text
-        console.log('Drawing mode enabled');
-    } else {
-        document.body.classList.remove("draw-cursor"); // Reset the cursor
-        toggleDrawButton.textContent = 'Enable Draw Mode'; // Update button text
-        console.log('Drawing mode disabled');
-    }
+    isDrawing = true;
+    document.body.classList.add("draw-cursor"); // Apply the cursor
 });
 
 
@@ -266,7 +506,7 @@ function drawWall(points, height) {
     };
 
     const textureLoader = new THREE.TextureLoader();
-    const wallTexture = textureLoader.load('./t1.png', (texture) => {
+    const wallTexture = textureLoader.load('./public/images/t1.png', (texture) => {
         texture.wrapS = THREE.RepeatWrapping; // Allow repeating the texture horizontally
         texture.wrapT = THREE.RepeatWrapping; // Allow repeating the texture vertically
         texture.repeat.set(4, 1); // Adjust texture scaling (4 repeats along length, 1 along height)
@@ -574,8 +814,102 @@ document.getElementById('add-wall-btn').addEventListener('click', () => {
     wallBasePoints = []; // Clear previous points
     resetWallDrawing(); // Clear any temporary drawings
 });
+// Apply the selected texture to the object
+function applyTexture(texture) {
+    const loader = new THREE.TextureLoader();
+    loader.load(`./public/images/${texture}`, (loadedTexture) => {
+        loadedTexture.wrapS = THREE.RepeatWrapping;
+        loadedTexture.wrapT = THREE.RepeatWrapping;
+        loadedTexture.repeat.set(1, 1);
+        selectedObject.material.map = loadedTexture;
+        selectedObject.material.needsUpdate = true;
+        document.getElementById('textureModal').classList.add('hidden'); // Close the modal
+    });
+}
+
+function showTextureModal() {
+    const modal = document.getElementById('textureModal');
+    modal.classList.remove('hidden');
+
+    const textureList = document.getElementById('textureList');
+    textureList.innerHTML = ''; // Clear previous textures
+
+    // Load available textures from the public/images folder
+    const textures = ['t1.png', 'RoastBrown.png']; // Add your texture file names here
+
+    textures.forEach((texture) => {
+        const img = document.createElement('img');
+        img.src = `./public/images/${texture}`;
+        img.classList.add('cursor-pointer', 'border', 'rounded', 'w-40', 'h-20');
+        img.addEventListener('click', () => applyTexture(texture));
+        textureList.appendChild(img);
+    });
+
+    document.getElementById('closeModal').addEventListener('click', () => {
+        modal.classList.add('hidden'); // Close the modal
+    });
+}
+
+// Handle right-click on any 3D object
+function onRightClick(event) {
+    event.preventDefault();
+
+    const mouse = new THREE.Vector2(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
+    );
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+    const validPolygons = polygons.filter(p => p.extrudedObject !== null);
+    let intersects = raycaster.intersectObjects(validPolygons.map(p => p.extrudedObject), true);
+    if (intersects.length === 0) {
+        // If no intersections found in validPolygons, check all children of the scene
+        intersects = raycaster.intersectObjects(scene.children, true);
+    }
+    console.log(intersects)
+    if (intersects.length > 0 && intersects.length < 5) {
+        selectedObject = intersects[0].object; // Store the clicked object
+        showTextureModal(); // Display the texture selection modal
+    }
+}
+window.addEventListener('contextmenu', (event) => {
+    event.preventDefault(); // Prevent the default context menu from showing
+    onRightClick(event); // Call your function to handle right-click
+});
 
 
+
+// Assuming you have these two flags to control the views
+let is2D = false;
+
+// Function to switch to 2D view
+function switchTo2D() {
+    is2D = true;
+    // Adjust your camera and scene settings for 2D
+    camera.position.set(0, 10, 0); // Adjust the camera position for a top-down view
+    camera.rotation.set(-Math.PI / 2, 0, 0); // Point the camera downwards
+    controls.enableRotate = false; // Disable rotation for 2D
+    controls.enableZoom = false; // Optionally disable zoom
+    controls.update(); // Update controls
+    animate();
+}
+
+// Function to switch to 3D view
+function switchTo3D() {
+    is2D = false;
+    // Reset camera settings for 3D view
+    camera.position.set(0, 5, 10); // Adjust to your desired 3D position
+    camera.rotation.set(0, 0, 0); // Reset rotation
+    controls.enableRotate = true; // Enable rotation for 3D
+    controls.enableZoom = true; // Optionally enable zoom
+    controls.update(); // Update controls
+    animate();
+}
+
+// Add event listeners to the buttons
+document.getElementById("switchTo2D").addEventListener("click", switchTo2D);
+document.getElementById("switchTo3D").addEventListener("click", switchTo3D);
 // Function to handle keyboard input for moving the selected object
 function onKeyDown(event) {
     if (!selectedObject) return; // Only move if an object is selected
@@ -609,7 +943,16 @@ function onKeyDown(event) {
 
 // Add event listener for keydown
 window.addEventListener('keydown', onKeyDown);
+// Handle the button click
+document.getElementById('addObjectBtn').addEventListener('click', () => {
+    openModal();
+    console.log('Object added to the scene');
+});
+// Handle the button click
+document.getElementById('closeObjectModal').addEventListener('click', () => {
+    closeModal();
 
+});
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);

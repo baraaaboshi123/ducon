@@ -1,47 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Three.js Polygon Extrusion</title>
-        <script src="https://cdn.tailwindcss.com"></script> <!-- Tailwind CSS -->
-        <style>
-            body {
-                margin: 0;
-                overflow: hidden; /* Prevent scrollbars */
-            }
-            canvas {
-                display: block;
-            }
-            .draw-cursor {
-        cursor: crosshair; /* Crosshair cursor for precision */
-    }
-        </style>
-    </head>
-    <body>
-        <!-- Navbar -->
-        <nav class="bg-gray-800 p-4 fixed top-0 left-0 w-full flex justify-between items-center">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>Three.js Polygon Extrusion</title>
+    <script src="https://cdn.tailwindcss.com"></script> <!-- Tailwind CSS -->
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            /* Prevent scrollbars */
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .draw-cursor {
+            cursor: crosshair;
+            /* Crosshair cursor for precision */
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="bg-gray-800 p-8 fixed top-0 left-0 w-full flex items-center justify-between text-white">
+        <!-- Buttons on the Left -->
+        <div class="flex space-x-4 items-center">
+            <button id="toggleDrawButton" class="text-xl bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                Model Floor
+            </button>
+            <button id="add-wall-btn" class="text-xl bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                Model Wall
+            </button>
+            <button id="addObjectBtn" class="text-xl bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded">
+                Add Object
+            </button>
+        </div>
+
+        <!-- Centered Logo -->
+        <div class="absolute left-1/2 transform -translate-x-1/2">
+            <img src="./logo.png" alt="Logo" class="h-30 w-auto">
+        </div>
+
+        <!-- Right Section -->
+        <div class="flex items-center space-x-6">
+
+            <!-- Properties Tool -->
             <div class="flex items-center space-x-2">
-                <!-- Logo Image -->
-                <img src="./logo.png" alt="Logo" class="h-30 w-70">
-                
-            </div>
-            <div class="space-x-4">
-                <button id="toggleDrawButton" 
-                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                    Toggle Draw Mode
-                </button>
-                <button id="add-wall-btn" 
-                    class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
-                    Add Wall
+                <button id=""
+                    class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded border-r border-gray-500">
+                    <i class="fas fa-tools text-xl"></i>
+                    Properties
                 </button>
             </div>
-        </nav>
-    
-        <script type="module" src="./app.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-        <script src="https://threejs.org/examples/js/loaders/FontLoader.js"></script>
-    </body>
-    
+
+            <!-- Separator -->
+            <span class="text-gray-400">|</span>
+
+            <!-- Distance Meter -->
+            <div class="flex items-center space-x-2">
+                <button id=""
+                    class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-lg border-r border-gray-500">
+                    <i class="fas fa-ruler text-2xl"></i>
+                    Distance
+                </button>
+
+            </div>
+
+            <!-- Separator -->
+            <span class="text-gray-400">|</span>
+
+            <!-- 2D / 3D Switch Icons -->
+            <div class="flex space-x-2 items-center">
+                <button id="switchTo2D"
+                    class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-l-lg border-r border-gray-500">
+                    2D
+                </button>
+                <button id="switchTo3D"
+                    class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-r-lg">
+                    3D
+                </button>
+            </div>
+
+            <!-- Separator -->
+            <span class="text-gray-400">|</span>
+
+            <!-- Total Cost Display -->
+            <div class="flex items-center space-x-2">
+                <span class="text-lg text-gray-400">Total Cost:</span>
+                <span id="totalCost" class="text-lg font-semibold text-white bg-gray-700 px-3 py-1 rounded">
+                    $0.00
+                </span>
+            </div>
+
+            <!-- Separator -->
+            <span class="text-gray-400">|</span>
+
+            <!-- POQ Button -->
+            <button id="poqBtn" class="bg-gray-700 text-lg hover:bg-gray-600 text-white px-4 py-2 rounded">
+                POQ
+            </button>
+        </div>
+    </nav>
+
+
+
+
+    <!-- Texture Selection Modal -->
+    <div id="textureModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+        <div class="bg-white p-6 rounded-md shadow-md">
+            <h2 class="text-xl font-bold mb-4">Select Ducon Pavers:</h2> <!-- select ducon walls: -->
+            <div id="textureList" class="grid grid-cols-3 gap-4"></div>
+            <button id="closeModal" class="mt-4 bg-red-500 text-white px-4 py-2 rounded">Close</button>
+        </div>
+    </div>
+    <!-- Modal Background -->
+    <div id="objectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg max-w-3xl w-full">
+            <div class="text-right">
+                <button id="closeObjectModal" class="text-red-500 font-bold">&times;</button>
+            </div>
+            <h2 class="text-2xl font-bold mb-4">Select an Object</h2>
+            <div id="objectGrid" class="grid grid-cols-3 gap-4"></div>
+        </div>
+    </div>
+
+
+    <!-- Invoice Modal Background -->
+    <div id="invoiceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-lg max-w-3xl w-full">
+            <div class="text-right">
+                <button id="closeInvoiceModal" class="text-red-500 text-3xl font-bold">&times;</button>
+            </div>
+
+            <!-- Invoice Header -->
+            <div class="mb-6 bg-gradient-to-r from-blue-800 to-teal-600 text-white py-4 rounded-t-lg">
+                <div class="flex justify-between items-center">
+                    <!-- Date aligned to the left -->
+                    <p class="ml-4 text-xl">Date: <span id="invoiceDate"></span></p>
+
+                    <!-- Centered Logo -->
+                    <img src="./logo.png" alt="Logo" class="mx-auto" style="width: 200px; height: 80px;">
+
+                    <!-- Total Price aligned to the right -->
+                    <p class="mr-4 text-xl font-semibold">Total: $<span id="totalPrice"></span></p>
+                </div>
+                <h2 class="text-center text-2xl font-bold mt-4">Invoice</h2>
+            </div>
+
+
+
+
+
+            <!-- Invoice Table -->
+            <table class="w-full mb-6 border-collapse">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-700">
+                        <th class="p-2 border">Object Name</th>
+                        <th class="p-2 border">Price</th>
+                        <th class="p-2 border">Quantity</th>
+                        <th class="p-2 border">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="invoiceBody">
+                    <!-- Rows will be added dynamically -->
+                </tbody>
+            </table>
+
+
+
+            <!-- Print Button -->
+            <div class="text-center mt-6">
+                <button id="printInvoice" class="bg-blue-500 text-white p-2 rounded">Print Invoice</button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <script type="module" src="./app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://threejs.org/examples/js/loaders/FontLoader.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js"></script>
+</body>
+
 </html>

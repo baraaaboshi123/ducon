@@ -1158,7 +1158,7 @@ function onMouseClick(event) {
 
         textures.forEach((texture) => {
             const img = document.createElement('img');
-            img.src = `./public/images/${texture}`;
+            img.src = `/images/walls/${texture}`;
             img.classList.add('cursor-pointer', 'border', 'rounded', 'w-40', 'h-20');
             img.addEventListener('click', () => applyTexture(texture));
             textureList.appendChild(img);
@@ -1180,7 +1180,7 @@ function onMouseClick(event) {
 
         textures.forEach((texture) => {
             const img = document.createElement('img');
-            img.src = `./public/images/pavers/${texture}`;
+            img.src = `/images/pavers/${texture}`;
             img.classList.add('cursor-pointer', 'border', 'rounded', 'w-40', 'h-20');
             img.addEventListener('click', () => applyTexturePavers(texture));
             textureList.appendChild(img);

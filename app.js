@@ -1114,7 +1114,7 @@ function onMouseClick(event) {
         wallChosenTexture = texture;
         console.log(wallChosenTexture)
         const loader = new THREE.TextureLoader();
-        loader.load(`./public/images/walls/${texture}`, (loadedTexture) => {
+        loader.load(`/images/walls/${texture}`, (loadedTexture) => {
             loadedTexture.wrapS = THREE.RepeatWrapping;
             loadedTexture.wrapT = THREE.RepeatWrapping;
             loadedTexture.repeat.set(1, 1);
@@ -1129,7 +1129,7 @@ function onMouseClick(event) {
     function applyTexturePavers(texture) {
         floorChosenTexture = texture;
         const loader = new THREE.TextureLoader();
-        loader.load(`./public/images/pavers/${texture}`, (loadedTexture) => {
+        loader.load(`/images/pavers/${texture}`, (loadedTexture) => {
             loadedTexture.wrapS = THREE.RepeatWrapping;
             loadedTexture.wrapT = THREE.RepeatWrapping;
             loadedTexture.repeat.set(1, 1);

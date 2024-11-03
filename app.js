@@ -381,7 +381,7 @@ function drawLineWithDistance(point1, point2, distance) {
 
     // Position label at the midpoint of the line
     lengthLabel.position.set(
-        point1.x ,
+        point1.x,
         point1.y,
         point1.z
     );
@@ -433,7 +433,52 @@ function screenToWorld(x, y, camera) {
 //end measuare destance section ------------------------------------------------------------------
 
 
+let isProparity = false;
+//propareties section ----------------------------------------------------------------------------
+document.getElementById('properties').addEventListener('click', () => {
+    document.body.style.cursor = 'pointer'; // Change cursor
+    isProparity = true;
+});
 
+// Open and populate the properties modal
+function openPropertiesModal(object, type) {
+    document.getElementById("propertiesModal").classList.remove("hidden");
+
+    if (obType === 'Object') {
+
+        // Populate modal with object properties
+        document.getElementById("objectName").textContent = object.name || "Unknown Name";
+        document.getElementById("objectPrice").textContent = `$${object.price.toFixed(2) || '0.00'}`;
+        document.getElementById("objectImage").src = object.image || "path/to/default-image.jpg"; // Default image if none provided
+    }
+    else if (obType === 'Floor') {
+        document.getElementById("objectName").textContent = "Floor";
+        document.getElementById("objectPrice").textContent = `${(object.area * 80).toFixed(2)} 'AED', area: ${object.area.toFixed(2)}`;
+        document.getElementById("objectImage").src = `/images/pavers/${object.texture}.png` || "path/to/default-image.jpg"; // Default image if none provided
+    }
+    else if (obType === 'Wall') {
+        document.getElementById("objectName").textContent = "Wall";
+        document.getElementById("objectPrice").textContent = `${(object.area * 80).toFixed(2)} 'AED', area: ${object.area.toFixed(2)}`;
+        document.getElementById("objectImage").src = `/images/walls/${object.texture}.png` || "path/to/default-image.jpg"; // Default image if none provided
+
+    }
+
+}
+
+// Close the modal
+function closePropertiesModal() {
+    document.getElementById("propertiesModal").classList.add("hidden");
+    isProparity = false;
+    document.body.style.cursor = 'default'; // Change cursor
+}
+
+document.getElementById("propConfirmBtn").addEventListener('click', () => {
+    closePropertiesModal()
+})
+document.getElementById("closePropertiesModal").addEventListener('click', () => {
+    closePropertiesModal()
+})
+//end propareties section ------------------------------------------------------------------------
 
 
 // Get mouse position helper
@@ -834,8 +879,83 @@ function getMousePosition(event) {
     return { x: pos.x, z: pos.z };
 }
 
+let obType = "";
 // Function to handle mouse clicks
 function onMouseClick(event) {
+
+    if (isProparity) {
+        const modelGroups = loadedModels.map(model => model.model).filter(obj => obj instanceof THREE.Group);
+        // Calculate mouse position in normalized device coordinates (-1 to +1)
+        let mouse2 = new THREE.Vector2();
+        mouse2.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse2.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        let raycaster2 = new THREE.Raycaster();
+        raycaster2.setFromCamera(mouse2, camera);
+
+        // Check the polygons array for valid extrudedObjects
+        const validPolygons = polygons
+            .filter(p => p.extrudedObject !== null)
+            .map(p => p.extrudedObject);
+
+        const validWalls = walls
+            .filter(w => w.extrudedObject !== null)
+            .map(w => w.extrudedObject);
+        // Combine both validPolygons and modelObjects
+        const objectsToCheck = [...validPolygons, ...modelGroups, ...validWalls]
+            .filter(obj => {
+                if (obj && typeof obj === 'object' && 'layers' in obj) {
+                    console.log("Object passed filter:", obj);
+                    return true;
+                } else {
+                    console.log("Object failed filter:", obj);
+                    return false;
+                }
+            });
+
+
+        // Intersect with the combined array of validPolygons and modelObjects
+        let intersects2 = raycaster2.intersectObjects(objectsToCheck, true);
+        console.log(intersects2)
+        if (intersects2.length > 0) {
+            selectedObject = intersects2[0].object.parent; // Store the selected object
+            obType = 'Object'
+            if (selectedObject.type === 'Scene') {
+
+                selectedObject = intersects2[0].object;
+            }
+            console.log('Selected Object:', selectedObject.uuid);
+            let propModel;
+            loadedModels.forEach(model => {
+                if (model.model.uuid === selectedObject.uuid)
+                    propModel = model;
+            })
+            if (propModel == undefined) {
+                polygons.forEach(p => {
+                    if (p.extrudedObject.uuid === selectedObject.uuid) {
+                        obType = 'Floor';
+                        propModel = p;
+                    }
+                })
+            }
+
+            if (propModel == undefined) {
+                walls.forEach(w => {
+                    if (w.extrudedObject.uuid === selectedObject.uuid) {
+                        obType = 'Wall';
+                        propModel = w;
+                    }
+                })
+            }
+            console.log("selected model: ", propModel)
+
+            if (propModel) {
+                openPropertiesModal(propModel, obType)
+            }
+
+        }
+        return;
+    }
 
     if (isMeasuring) {
         console.log("Click event triggered inside measurement container.");
@@ -849,491 +969,541 @@ function onMouseClick(event) {
         raycaster1.setFromCamera(mouse1, camera);
 
         // Intersect with the invisible plane (instead of grid directly)
-         let intersects1 = raycaster1.intersectObject(plane);
-         let point;
+        let intersects1 = raycaster1.intersectObject(plane);
+        let point;
         if (intersects1.length > 0) {
-             point = intersects1[0].point;
+            point = intersects1[0].point;
         }
-            points.push(point);
+        points.push(point);
 
-          
 
-            if (points.length === 3) {
-                // Calculate distance between the two 3D points
-                const distance = calculate3DDistance(points[1], points[2]);
-                drawLineWithDistance(points[1], points[2], distance); // Function to draw line in 3D
 
-                points = []; // Reset points for next measurement
-                isMeasuring = false;
-                document.body.style.cursor = 'default';
-                measurementContainer.classList.remove("active");
-                alert(`Distance: ${distance.toFixed(2)} meters`);
-                animate();
-            }
-            return;
+        if (points.length === 3) {
+            // Calculate distance between the two 3D points
+            const distance = calculate3DDistance(points[1], points[2]);
+            drawLineWithDistance(points[1], points[2], distance); // Function to draw line in 3D
+
+            points = []; // Reset points for next measurement
+            isMeasuring = false;
+            document.body.style.cursor = 'default';
+            measurementContainer.classList.remove("active");
+            alert(`Distance: ${distance.toFixed(2)} meters`);
+            animate();
         }
+        return;
+    }
 
 
-        if (wallDrawingMode && wallBasePoints.length < 3) {
-            const point = getMousePosition(event);
-            const vectorPoint = new THREE.Vector3(point.x, 0, point.z); // Create a THREE.Vector3 point
+    if (wallDrawingMode && wallBasePoints.length < 3) {
+        const point = getMousePosition(event);
+        const vectorPoint = new THREE.Vector3(point.x, 0, point.z); // Create a THREE.Vector3 point
 
-            // Draw the point at the clicked position
-            if (wallBasePoints.length > 1) {
-                drawPoint(vectorPoint);
+        // Draw the point at the clicked position
+        if (wallBasePoints.length > 1) {
+            drawPoint(vectorPoint);
 
-            }
-            wallBasePoints.push(vectorPoint); // Store the clicked point
-
-            // If two points have been clicked, prompt for wall height and draw the wall
-            if (wallBasePoints.length === 3) {
-                const heightInput = prompt("Enter the wall height:", "2.5"); // Prompt for height
-                wallHeight = parseFloat(heightInput);
-
-                // Validate the height input
-                if (isNaN(wallHeight) || wallHeight <= 0) {
-                    alert("Please enter a valid height.");
-                    resetWallDrawing(); // Reset the drawing if the input is invalid
-                } else {
-                    wallBasePoints.shift();
-                    drawWall(wallBasePoints, wallHeight); // Draw the wall
-                    wallDrawingMode = false; // Disable drawing mode after drawing
-                    document.body.classList.remove("draw-cursor"); // Reset the cursor
-                    wallBasePoints = []; // Clear points for future walls
-                }
-            }
         }
+        wallBasePoints.push(vectorPoint); // Store the clicked point
 
-        if (!isDrawing) return; // Ignore clicks if not in drawing mode
+        // If two points have been clicked, prompt for wall height and draw the wall
+        if (wallBasePoints.length === 3) {
+            const heightInput = prompt("Enter the wall height:", "2.5"); // Prompt for height
+            wallHeight = parseFloat(heightInput);
 
-        if (currentPolygon.closed) {
-            // Raycaster to detect clicks on the arrow
-            let mouse = new THREE.Vector2();
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            let raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-            let intersects = raycaster.intersectObject(currentPolygon.arrow, true);
-
-            if (intersects.length > 0) {
-
-                extrudePolygon();
-                return;
+            // Validate the height input
+            if (isNaN(wallHeight) || wallHeight <= 0) {
+                alert("Please enter a valid height.");
+                resetWallDrawing(); // Reset the drawing if the input is invalid
+            } else {
+                wallBasePoints.shift();
+                drawWall(wallBasePoints, wallHeight); // Draw the wall
+                wallDrawingMode = false; // Disable drawing mode after drawing
+                document.body.classList.remove("draw-cursor"); // Reset the cursor
+                wallBasePoints = []; // Clear points for future walls
             }
         }
-        // Calculate mouse position in normalized device coordinates (-1 to +1)
+    }
+
+    if (!isDrawing) return; // Ignore clicks if not in drawing mode
+
+    if (currentPolygon.closed) {
+        // Raycaster to detect clicks on the arrow
         let mouse = new THREE.Vector2();
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
         mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        // Raycaster to project mouse position into the 3D world
         let raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(mouse, camera);
+        let intersects = raycaster.intersectObject(currentPolygon.arrow, true);
 
-        // Intersect with the invisible plane (instead of grid directly)
-        let intersects = raycaster.intersectObject(plane);
         if (intersects.length > 0) {
-            let point = intersects[0].point;
 
-            // Check if the user clicked inside the closed polygon
-            if (currentPolygon.closed && isPointInPolygon(point)) {
-                console.log('Click ignored: Point is inside the closed polygon.');
-                return; // Ignore the click
-            }
-
-            // Check if we are near the first point to close the path
-            if (isNearFirstPoint(point) && currentPolygon.points.length > 1) {
-                addLine(currentPolygon.points[currentPolygon.points.length - 1], currentPolygon.points[0]); // Close the polygon
-                currentPolygon.closed = true;
-                changePolygonColor(); // Change the color of the closed polygon
-                addArrowHelper(); // Add the extrusion arrow
-
-
-                // Remove the temporary line
-                if (currentPolygon.tempLine) {
-                    scene.remove(currentPolygon.tempLine);
-                    currentPolygon.tempLine = null;
-                }
-                return;
-            }
-
-            // Add a new point and a line connecting the previous point
-            addPoint(point.x, point.y, point.z);
-            if (currentPolygon.points.length > 1) {
-                addLine(currentPolygon.points[currentPolygon.points.length - 2], currentPolygon.points[currentPolygon.points.length - 1]);
-            }
-        }
-    }
-
-    function createTextTexture(text) {
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-
-        // Set the font size and style
-        context.font = '24px Arial';
-        const textWidth = context.measureText(text).width;
-
-        // Set canvas size based on text width
-        canvas.width = textWidth;
-        canvas.height = 30; // Set the height of the canvas
-
-        // Draw the text on the canvas
-        context.fillStyle = 'transparent'; // Background color
-        context.fillRect(0, 0, canvas.width, canvas.height); // Background rectangle
-        context.fillStyle = 'white'; // Text color
-        context.fillText(text, 0, 20); // Draw the text
-
-        // Create a texture from the canvas
-        const texture = new THREE.CanvasTexture(canvas);
-        return texture;
-    }
-    const distance = 5; // Example distance value
-    const texture = createTextTexture(`${distance.toFixed(2)} m`);
-
-    const planeGeometry1 = new THREE.PlaneGeometry(2, 1); // Width and height of the plane
-    const planeMaterial1 = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
-    let lengthLabel = new THREE.Mesh(planeGeometry1, planeMaterial1);
-
-    // Position the label above the intersection point
-    lengthLabel.position.y += 0.1; // Adjust height for visibility
-    // Function to handle mouse movement
-    function onMouseMove(event) {
-        if (wallDrawingMode && wallBasePoints.length === 2) {
-            const point = getMousePosition(event); // Get current mouse position
-            drawTempLine(wallBasePoints[1], point); // Draw a temporary line from the first point to the current mouse position
+            extrudePolygon();
             return;
         }
-        // Calculate mouse position in normalized device coordinates (-1 to +1)
-        const mouse = new THREE.Vector2(
-            (event.clientX / window.innerWidth) * 2 - 1,
-            -(event.clientY / window.innerHeight) * 2 + 1
-        );
+    }
+    // Calculate mouse position in normalized device coordinates (-1 to +1)
+    let mouse = new THREE.Vector2();
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        // Update the raycaster
-        const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObject(plane);
+    // Raycaster to project mouse position into the 3D world
+    let raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
 
-        if (intersects.length > 0) {
-            const intersectionPoint = intersects[0].point;
+    // Intersect with the invisible plane (instead of grid directly)
+    let intersects = raycaster.intersectObject(plane);
+    if (intersects.length > 0) {
+        let point = intersects[0].point;
 
-            // Calculate distance and create/update label
-            if (currentPolygon.tempLine) {
-                const lastPoint = currentPolygon.points[currentPolygon.points.length - 1];
-                console.log("lastpoint: ", lastPoint)
-                const distance = lastPoint.distanceTo(intersectionPoint);
-                const texture = createTextTexture(`${distance.toFixed(2)} m`);
-                scene.remove(lengthLabel)
-                const planeMaterial1 = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
-                lengthLabel = new THREE.Mesh(new THREE.PlaneGeometry(2, 1), planeMaterial1);
-                lengthLabel.position.copy(intersectionPoint);
-                lengthLabel.position.y += 0.1; // Adjust height for visibility
-                scene.add(lengthLabel);
-            }
-
-            // Update the temporary line position
-            if (currentPolygon.tempLine) {
-                currentPolygon.tempLine.geometry.setFromPoints([currentPolygon.points[currentPolygon.points.length - 1], intersectionPoint]);
-            } else if (currentPolygon.points.length > 0) {
-                const lineMaterial1 = new THREE.LineBasicMaterial({ color: 0xff0000 }); // Red color for feedback line
-                const lineGeometry1 = new THREE.BufferGeometry().setFromPoints([currentPolygon.points[currentPolygon.points.length - 1], intersectionPoint]);
-                currentPolygon.tempLine = new THREE.Line(lineGeometry1, lineMaterial1);
-                scene.add(currentPolygon.tempLine); // Add the temporary line to the scene
-            }
+        // Check if the user clicked inside the closed polygon
+        if (currentPolygon.closed && isPointInPolygon(point)) {
+            console.log('Click ignored: Point is inside the closed polygon.');
+            return; // Ignore the click
         }
 
-        // Remove the temporary line if the current polygon is closed
-        if (currentPolygon.closed) {
+        // Check if we are near the first point to close the path
+        if (isNearFirstPoint(point) && currentPolygon.points.length > 1) {
+            addLine(currentPolygon.points[currentPolygon.points.length - 1], currentPolygon.points[0]); // Close the polygon
+            currentPolygon.closed = true;
+            changePolygonColor(); // Change the color of the closed polygon
+            addArrowHelper(); // Add the extrusion arrow
+
+
+            // Remove the temporary line
             if (currentPolygon.tempLine) {
                 scene.remove(currentPolygon.tempLine);
                 currentPolygon.tempLine = null;
             }
+            return;
+        }
+
+        // Add a new point and a line connecting the previous point
+        addPoint(point.x, point.y, point.z);
+        if (currentPolygon.points.length > 1) {
+            addLine(currentPolygon.points[currentPolygon.points.length - 2], currentPolygon.points[currentPolygon.points.length - 1]);
         }
     }
+}
 
-    // Function to handle mouse up event
-    function onMouseUp(event) {
-        // Check if the path should be closed
+function createTextTexture(text) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
+    // Set the font size and style
+    context.font = '24px Arial';
+    const textWidth = context.measureText(text).width;
+
+    // Set canvas size based on text width
+    canvas.width = textWidth;
+    canvas.height = 30; // Set the height of the canvas
+
+    // Draw the text on the canvas
+    context.fillStyle = 'transparent'; // Background color
+    context.fillRect(0, 0, canvas.width, canvas.height); // Background rectangle
+    context.fillStyle = 'white'; // Text color
+    context.fillText(text, 0, 20); // Draw the text
+
+    // Create a texture from the canvas
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
+}
+const distance = 5; // Example distance value
+const texture = createTextTexture(`${distance.toFixed(2)} m`);
+
+const planeGeometry1 = new THREE.PlaneGeometry(2, 1); // Width and height of the plane
+const planeMaterial1 = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+let lengthLabel = new THREE.Mesh(planeGeometry1, planeMaterial1);
+
+// Position the label above the intersection point
+lengthLabel.position.y += 0.1; // Adjust height for visibility
+// Function to handle mouse movement
+function onMouseMove(event) {
+    if (wallDrawingMode && wallBasePoints.length === 2) {
+        const point = getMousePosition(event); // Get current mouse position
+        drawTempLine(wallBasePoints[1], point); // Draw a temporary line from the first point to the current mouse position
+        return;
+    }
+    // Calculate mouse position in normalized device coordinates (-1 to +1)
+    const mouse = new THREE.Vector2(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
+    );
+
+    // Update the raycaster
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObject(plane);
+
+    if (intersects.length > 0) {
+        const intersectionPoint = intersects[0].point;
+
+        // Calculate distance and create/update label
         if (currentPolygon.tempLine) {
-            scene.remove(currentPolygon.tempLine); // Remove the temporary line
-            currentPolygon.tempLine = null; // Reset temporary line
+            const lastPoint = currentPolygon.points[currentPolygon.points.length - 1];
+            console.log("lastpoint: ", lastPoint)
+            const distance = lastPoint.distanceTo(intersectionPoint);
+            const texture = createTextTexture(`${distance.toFixed(2)} m`);
+            scene.remove(lengthLabel)
+            const planeMaterial1 = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+            lengthLabel = new THREE.Mesh(new THREE.PlaneGeometry(2, 1), planeMaterial1);
+            lengthLabel.position.copy(intersectionPoint);
+            lengthLabel.position.y += 0.1; // Adjust height for visibility
+            scene.add(lengthLabel);
+        }
+
+        // Update the temporary line position
+        if (currentPolygon.tempLine) {
+            currentPolygon.tempLine.geometry.setFromPoints([currentPolygon.points[currentPolygon.points.length - 1], intersectionPoint]);
+        } else if (currentPolygon.points.length > 0) {
+            const lineMaterial1 = new THREE.LineBasicMaterial({ color: 0xff0000 }); // Red color for feedback line
+            const lineGeometry1 = new THREE.BufferGeometry().setFromPoints([currentPolygon.points[currentPolygon.points.length - 1], intersectionPoint]);
+            currentPolygon.tempLine = new THREE.Line(lineGeometry1, lineMaterial1);
+            scene.add(currentPolygon.tempLine); // Add the temporary line to the scene
         }
     }
 
-    // Add ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Soft white light
-    scene.add(ambientLight);
-
-    // Add a directional light
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(1, 1, 1).normalize();
-    scene.add(directionalLight);
-
-    let wallChosenTexture = "";
-    // Add event listeners for mouse actions
-    window.addEventListener('click', onMouseClick);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-
-    let selectedObject = null; // To keep track of the currently selected object
-    let isMoving = false; // Flag to indicate if an object is currently being moved
-
-    // Detect double-clicks to select an object
-
-    window.addEventListener('dblclick', function (event) {
-        // Calculate mouse position in normalized device coordinates (-1 to +1)
-        let mouse = new THREE.Vector2();
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-        let raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouse, camera);
-
-        // Check the polygons array for valid extrudedObjects
-        const validPolygons = polygons.filter(p => p.extrudedObject !== null);
-
-        // Intersect only meshes or specific objects
-        let intersects = raycaster.intersectObjects(validPolygons.map(p => p.extrudedObject), true);
-
-        if (intersects.length > 0) {
-            selectedObject = intersects[0].object; // Store the selected object
-            console.log('Selected Object:', selectedObject);
-            isMoving = true; // Start moving the object
+    // Remove the temporary line if the current polygon is closed
+    if (currentPolygon.closed) {
+        if (currentPolygon.tempLine) {
+            scene.remove(currentPolygon.tempLine);
+            currentPolygon.tempLine = null;
         }
+    }
+}
+
+// Function to handle mouse up event
+function onMouseUp(event) {
+    // Check if the path should be closed
+    if (currentPolygon.tempLine) {
+        scene.remove(currentPolygon.tempLine); // Remove the temporary line
+        currentPolygon.tempLine = null; // Reset temporary line
+    }
+}
+
+// Add ambient light
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Soft white light
+scene.add(ambientLight);
+
+// Add a directional light
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(1, 1, 1).normalize();
+scene.add(directionalLight);
+
+let wallChosenTexture = "";
+// Add event listeners for mouse actions
+window.addEventListener('click', onMouseClick);
+window.addEventListener('mousemove', onMouseMove);
+window.addEventListener('mouseup', onMouseUp);
+
+let selectedObject = null; // To keep track of the currently selected object
+let isMoving = false; // Flag to indicate if an object is currently being moved
+
+// Detect double-clicks to select an object
+
+window.addEventListener('dblclick', function (event) {
+    // Ensure your loadedModels is an array of Group objects
+    const modelGroups = loadedModels.map(model => model.model).filter(obj => obj instanceof THREE.Group);
+    console.log(modelGroups)
+    // Calculate mouse position in normalized device coordinates (-1 to +1)
+    let mouse = new THREE.Vector2();
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    let raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+
+    // Check the polygons array for valid extrudedObjects
+    const validPolygons = polygons
+        .filter(p => p.extrudedObject !== null)
+        .map(p => p.extrudedObject);
+
+    // Map the models array to only include the loaded model objects
+    const modelObjects = loadedModels
+        .map(model => model.object)
+        .filter(obj => obj); // Remove any undefined or null entries
+
+    // Combine both validPolygons and modelObjects
+    const objectsToCheck = [...validPolygons, ...modelGroups]
+        .filter(obj => obj && typeof obj === 'object' && 'layers' in obj); // Ensure each object is valid
+
+    // Intersect with the combined array of validPolygons and modelObjects
+    let intersects = raycaster.intersectObjects(objectsToCheck, true);
+    console.log('intersects:', intersects)
+    if (intersects.length > 0) {
+
+        selectedObject = intersects[0].object.parent; // Store the selected object
+        if (selectedObject.type === 'Scene')
+            selectedObject = intersects[0].object;
+        console.log('Selected Object:', selectedObject);
+        isMoving = true; // Start moving the object
+    }
+});
+
+const rotationAngle = THREE.MathUtils.degToRad(5); // 30 degrees in radians
+window.addEventListener('keydown', function (event) {
+    let pivotPoint = new THREE.Vector3(0, 0, 0); // Change this to your desired pivot point
+    if (event.key === 'r' || event.key === 'R') { // Check if the "R" key is pressed
+        if (selectedObject) {
+            // Calculate the direction from the pivot point to the object
+            const direction = new THREE.Vector3().subVectors(selectedObject.position, pivotPoint);
+            const distance = direction.length(); // Distance from the pivot point
+            // Calculate the new angle by adding the rotation angle
+            const currentAngle = Math.atan2(direction.z, direction.x); // Get the current angle in radians
+            const newAngle = currentAngle + rotationAngle; // Add the rotation angle
+
+            // Calculate the new position after rotation
+            const newX = pivotPoint.x + distance * Math.cos(newAngle); // New X position
+            const newZ = pivotPoint.z + distance * Math.sin(newAngle); // New Z position
+
+            // Update the object's position
+            selectedObject.position.set(newX, selectedObject.position.y, newZ);
+            // Optionally, make the object face the pivot point
+            selectedObject.lookAt(pivotPoint); // Make the object face the pivot point
+
+            console.log('Rotated Selected Object:', selectedObject);
+        }
+    }
+});
+
+// Activate wall drawing mode
+document.getElementById('add-wall-btn').addEventListener('click', () => {
+    showTextureModal()
+    document.body.classList.add("draw-cursor"); // Apply the cursor
+    wallBasePoints = []; // Clear previous points
+    resetWallDrawing(); // Clear any temporary drawings
+});
+// Apply the selected texture to the object
+function applyTexture(texture) {
+    wallChosenTexture = texture;
+    console.log(wallChosenTexture)
+    const loader = new THREE.TextureLoader();
+    loader.load(`/images/walls/${texture}`, (loadedTexture) => {
+        loadedTexture.wrapS = THREE.RepeatWrapping;
+        loadedTexture.wrapT = THREE.RepeatWrapping;
+        loadedTexture.repeat.set(1, 1);
+        selectedObject.material.map = loadedTexture;
+        selectedObject.material.needsUpdate = true;
+
     });
-    // Activate wall drawing mode
-    document.getElementById('add-wall-btn').addEventListener('click', () => {
-        showTextureModal()
+    wallDrawingMode = true; // Enable wall drawing mode
+    document.getElementById('textureModal').classList.add('hidden'); // Close the modal
+}
+
+function applyTexturePavers(texture) {
+    floorChosenTexture = texture;
+    const loader = new THREE.TextureLoader();
+    loader.load(`/images/pavers/${texture}`, (loadedTexture) => {
+        loadedTexture.wrapS = THREE.RepeatWrapping;
+        loadedTexture.wrapT = THREE.RepeatWrapping;
+        loadedTexture.repeat.set(1, 1);
+        selectedObject.material.map = loadedTexture;
+        selectedObject.material.needsUpdate = true;
+
+    });
+
+    document.getElementById('textureModalPavers').classList.add('hidden'); // Close the modal
+    setTimeout(() => {
+        isDrawing = true;
         document.body.classList.add("draw-cursor"); // Apply the cursor
-        wallBasePoints = []; // Clear previous points
-        resetWallDrawing(); // Clear any temporary drawings
-    });
-    // Apply the selected texture to the object
-    function applyTexture(texture) {
-        wallChosenTexture = texture;
-        console.log(wallChosenTexture)
-        const loader = new THREE.TextureLoader();
-        loader.load(`/images/walls/${texture}`, (loadedTexture) => {
-            loadedTexture.wrapS = THREE.RepeatWrapping;
-            loadedTexture.wrapT = THREE.RepeatWrapping;
-            loadedTexture.repeat.set(1, 1);
-            selectedObject.material.map = loadedTexture;
-            selectedObject.material.needsUpdate = true;
-
-        });
-        wallDrawingMode = true; // Enable wall drawing mode
-        document.getElementById('textureModal').classList.add('hidden'); // Close the modal
-    }
-
-    function applyTexturePavers(texture) {
-        floorChosenTexture = texture;
-        const loader = new THREE.TextureLoader();
-        loader.load(`/images/pavers/${texture}`, (loadedTexture) => {
-            loadedTexture.wrapS = THREE.RepeatWrapping;
-            loadedTexture.wrapT = THREE.RepeatWrapping;
-            loadedTexture.repeat.set(1, 1);
-            selectedObject.material.map = loadedTexture;
-            selectedObject.material.needsUpdate = true;
-
-        });
-
-        document.getElementById('textureModalPavers').classList.add('hidden'); // Close the modal
-        setTimeout(() => {
-            isDrawing = true;
-            document.body.classList.add("draw-cursor"); // Apply the cursor
-        }, 100); // Adjust delay time as needed (100ms should be enough)
+    }, 100); // Adjust delay time as needed (100ms should be enough)
 
 
-    }
+}
 
-    function showTextureModal() {
-        const modal = document.getElementById('textureModal');
-        modal.classList.remove('hidden');
-        const textureList = document.getElementById('textureList');
-        textureList.innerHTML = ''; // Clear previous textures
+function showTextureModal() {
+    const modal = document.getElementById('textureModal');
+    modal.classList.remove('hidden');
+    const textureList = document.getElementById('textureList');
+    textureList.innerHTML = ''; // Clear previous textures
 
-        // Load available textures from the public/images folder
-        const textures = ['Wall-Decado-Dune_BaseColor.png', 'Wall-Decado-Hazel_BaseColor.png', 'Wall-Decado-Iris_BaseColor.png', 'Wall-Decado-Nebula_BaseColor.png', 'Wall-Decado-RoastBrown_BaseColor.png']; // Add your texture file names here
+    // Load available textures from the public/images folder
+    const textures = ['Wall-Decado-Dune_BaseColor.png', 'Wall-Decado-Hazel_BaseColor.png', 'Wall-Decado-Iris_BaseColor.png', 'Wall-Decado-Nebula_BaseColor.png', 'Wall-Decado-RoastBrown_BaseColor.png']; // Add your texture file names here
 
-        textures.forEach((texture) => {
-            const img = document.createElement('img');
-            img.src = `/images/walls/${texture}`;
-            img.classList.add('cursor-pointer', 'border', 'rounded', 'w-40', 'h-20');
-            img.addEventListener('click', () => applyTexture(texture));
-            textureList.appendChild(img);
-        });
-
-        document.getElementById('closeModal').addEventListener('click', () => {
-            modal.classList.add('hidden'); // Close the modal
-        });
-    }
-    let floorChosenTexture = "";
-    function showTextureModalPavers() {
-        const modal = document.getElementById('textureModalPavers');
-        modal.classList.remove('hidden');
-        const textureList = document.getElementById('textureListPavers');
-        textureList.innerHTML = ''; // Clear previous textures
-
-        // Load available textures from the public/images folder
-        const textures = ['PebblesBlack_BaseColor.png', 'TerentoHazel_BaseColor.png', 'TerentoSlate_BaseColor.png', 'VillagioSlate_BaseColor.png', 'VillagioTerra_BaseColor.png']; // Add your texture file names here
-
-        textures.forEach((texture) => {
-            const img = document.createElement('img');
-            img.src = `/images/pavers/${texture}`;
-            img.classList.add('cursor-pointer', 'border', 'rounded', 'w-40', 'h-20');
-            img.addEventListener('click', () => applyTexturePavers(texture));
-            textureList.appendChild(img);
-        });
-
-        document.getElementById('closeModalPavers').addEventListener('click', () => {
-            modal.classList.add('hidden'); // Close the modal
-        });
-    }
-
-
-    // Handle right-click on any 3D object
-    function onRightClick(event) {
-        event.preventDefault();
-
-        const mouse = new THREE.Vector2(
-            (event.clientX / window.innerWidth) * 2 - 1,
-            -(event.clientY / window.innerHeight) * 2 + 1
-        );
-
-        const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouse, camera);
-        const validPolygons = polygons.filter(p => p.extrudedObject !== null);
-        let intersects = raycaster.intersectObjects(validPolygons.map(p => p.extrudedObject), true);
-        if (intersects.length === 0) {
-            // If no intersections found in validPolygons, check all children of the scene
-            intersects = raycaster.intersectObjects(scene.children, true);
-        }
-        console.log(intersects)
-        if (intersects.length > 0 && intersects.length < 5) {
-            selectedObject = intersects[0].object; // Store the clicked object
-            showTextureModal(); // Display the texture selection modal
-        }
-    }
-    window.addEventListener('contextmenu', (event) => {
-        event.preventDefault(); // Prevent the default context menu from showing
-        onRightClick(event); // Call your function to handle right-click
+    textures.forEach((texture) => {
+        const img = document.createElement('img');
+        img.src = `/images/walls/${texture}`;
+        img.classList.add('cursor-pointer', 'border', 'rounded', 'w-40', 'h-20');
+        img.addEventListener('click', () => applyTexture(texture));
+        textureList.appendChild(img);
     });
 
-    // JavaScript to handle color switching
-    let isLightMode = false; // Track the current mode (false = dark mode)
+    document.getElementById('closeModal').addEventListener('click', () => {
+        modal.classList.add('hidden'); // Close the modal
+    });
+}
+let floorChosenTexture = "";
+function showTextureModalPavers() {
+    const modal = document.getElementById('textureModalPavers');
+    modal.classList.remove('hidden');
+    const textureList = document.getElementById('textureListPavers');
+    textureList.innerHTML = ''; // Clear previous textures
 
-    document.getElementById("toggleColorButton").addEventListener("click", function () {
+    // Load available textures from the public/images folder
+    const textures = ['PebblesBlack_BaseColor.png', 'TerentoHazel_BaseColor.png', 'TerentoSlate_BaseColor.png', 'VillagioSlate_BaseColor.png', 'VillagioTerra_BaseColor.png']; // Add your texture file names here
 
-        if (!isLightMode) {
-            scene.background = new THREE.Color(0xffffff); // Sets the background color to white
-            this.querySelector('i').classList.remove('text-yellow-100'); // Remove dark mode color
-            this.querySelector('i').classList.add('text-yellow-400'); // Add light mode color
-        } else {
-            scene.background = new THREE.Color(0x000000); // Sets the background color to white
-            this.querySelector('i').classList.remove('text-yellow-400'); // Remove light mode color
-            this.querySelector('i').classList.add('text-yellow-100'); // Add dark mode color
-        }
-        isLightMode = !isLightMode; // Toggle the mode
+    textures.forEach((texture) => {
+        const img = document.createElement('img');
+        img.src = `/images/pavers/${texture}`;
+        img.classList.add('cursor-pointer', 'border', 'rounded', 'w-40', 'h-20');
+        img.addEventListener('click', () => applyTexturePavers(texture));
+        textureList.appendChild(img);
     });
 
-
-    // State to track the visibility of the grid
-    let isGridVisible = true;
-
-    // Function to toggle the grid visibility
-    document.getElementById("toggleGridButton").addEventListener("click", function () {
-        isGridVisible = !isGridVisible; // Toggle the state
-        gridHelper.visible = isGridVisible; // Set grid visibility
-        this.querySelector('i').classList.toggle('text-gray-500', !isGridVisible); // Change icon color based on visibility
-        this.querySelector('i').classList.toggle('text-white', isGridVisible); // Change icon color based on visibility
+    document.getElementById('closeModalPavers').addEventListener('click', () => {
+        modal.classList.add('hidden'); // Close the modal
     });
+}
 
-    // Assuming you have these two flags to control the views
-    let is2D = false;
 
-    // Function to switch to 2D view
-    function switchTo2D() {
-        is2D = true;
-        // Adjust your camera and scene settings for 2D
-        camera.position.set(0, 10, 0); // Adjust the camera position for a top-down view
-        camera.rotation.set(-Math.PI / 2, 0, 0); // Point the camera downwards
-        controls.enableRotate = false; // Disable rotation for 2D
-        controls.enableZoom = false; // Optionally disable zoom
-        controls.update(); // Update controls
-        animate();
+// Handle right-click on any 3D object
+function onRightClick(event) {
+    event.preventDefault();
+
+    const mouse = new THREE.Vector2(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
+    );
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+    const validPolygons = polygons.filter(p => p.extrudedObject !== null);
+    let intersects = raycaster.intersectObjects(validPolygons.map(p => p.extrudedObject), true);
+    if (intersects.length === 0) {
+        // If no intersections found in validPolygons, check all children of the scene
+        intersects = raycaster.intersectObjects(scene.children, true);
     }
-
-    // Function to switch to 3D view
-    function switchTo3D() {
-        is2D = false;
-        // Reset camera settings for 3D view
-        camera.position.set(0, 5, 10); // Adjust to your desired 3D position
-        camera.rotation.set(0, 0, 0); // Reset rotation
-        controls.enableRotate = true; // Enable rotation for 3D
-        controls.enableZoom = true; // Optionally enable zoom
-        controls.update(); // Update controls
-        animate();
+    console.log(intersects)
+    if (intersects.length > 0 && intersects.length < 5) {
+        selectedObject = intersects[0].object; // Store the clicked object
+        showTextureModal(); // Display the texture selection modal
     }
+}
+window.addEventListener('contextmenu', (event) => {
+    event.preventDefault(); // Prevent the default context menu from showing
+    onRightClick(event); // Call your function to handle right-click
+});
 
-    // Add event listeners to the buttons
-    document.getElementById("switchTo2D").addEventListener("click", switchTo2D);
-    document.getElementById("switchTo3D").addEventListener("click", switchTo3D);
-    // Function to handle keyboard input for moving the selected object
-    function onKeyDown(event) {
-        if (!selectedObject) return; // Only move if an object is selected
-        if (!isMoving) return; // Only move if currently in the moving state
+// JavaScript to handle color switching
+let isLightMode = false; // Track the current mode (false = dark mode)
 
-        const step = 0.1; // Define how much to move on each key press
+document.getElementById("toggleColorButton").addEventListener("click", function () {
 
-        switch (event.key) {
-            case 'ArrowUp': // Move up (Z-axis)
-                selectedObject.position.z -= step; // Move along the Z-axis
-                break;
-            case 'ArrowDown': // Move down (Z-axis)
-                selectedObject.position.z += step; // Move along the Z-axis
-                break;
-            case 'ArrowLeft': // Move left (X-axis)
-                selectedObject.position.x -= step; // Move along the X-axis
-                break;
-            case 'ArrowRight': // Move right (X-axis)
-                selectedObject.position.x += step; // Move along the X-axis
-                break;
-            case 'e': // End moving operation
-            case 'E':
-                isMoving = false; // Stop moving the object
-                console.log('Movement ended');
-                break;
-        }
-
-        // Ensure that the position is logged for debugging
-        console.log('Object Position:', selectedObject.position);
+    if (!isLightMode) {
+        scene.background = new THREE.Color(0xffffff); // Sets the background color to white
+        this.querySelector('i').classList.remove('text-yellow-100'); // Remove dark mode color
+        this.querySelector('i').classList.add('text-yellow-400'); // Add light mode color
+    } else {
+        scene.background = new THREE.Color(0x000000); // Sets the background color to white
+        this.querySelector('i').classList.remove('text-yellow-400'); // Remove light mode color
+        this.querySelector('i').classList.add('text-yellow-100'); // Add dark mode color
     }
+    isLightMode = !isLightMode; // Toggle the mode
+});
 
-    // Add event listener for keydown
-    window.addEventListener('keydown', onKeyDown);
-    // Handle the button click
-    document.getElementById('addObjectBtn').addEventListener('click', () => {
-        openModal();
-        console.log('Object added to the scene');
-    });
-    // Handle the button click
-    document.getElementById('closeObjectModal').addEventListener('click', () => {
-        closeModal();
 
-    });
-    // Animation loop
-    function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-    }
+// State to track the visibility of the grid
+let isGridVisible = true;
 
+// Function to toggle the grid visibility
+document.getElementById("toggleGridButton").addEventListener("click", function () {
+    isGridVisible = !isGridVisible; // Toggle the state
+    gridHelper.visible = isGridVisible; // Set grid visibility
+    this.querySelector('i').classList.toggle('text-gray-500', !isGridVisible); // Change icon color based on visibility
+    this.querySelector('i').classList.toggle('text-white', isGridVisible); // Change icon color based on visibility
+});
+
+// Assuming you have these two flags to control the views
+let is2D = false;
+
+// Function to switch to 2D view
+function switchTo2D() {
+    is2D = true;
+    // Adjust your camera and scene settings for 2D
+    camera.position.set(0, 10, 0); // Set the camera's initial position for a top-down view
+    camera.rotation.set(-Math.PI / 2, 0, 0); // Point the camera downwards
+
+    controls.enableRotate = false; // Disable rotation for 2D
+    controls.enableZoom = true; // Enable zoom (make sure this is set to true)
+
+    controls.minDistance = 5; // Set minimum zoom distance
+    controls.maxDistance = 100; // Set maximum zoom distance
+
+    controls.update(); // Update controls
     animate();
+}
 
-    // Handle window resize
-    window.addEventListener('resize', function () {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+
+// Function to switch to 3D view
+function switchTo3D() {
+    is2D = false;
+    // Reset camera settings for 3D view
+    camera.position.set(0, 5, 10); // Adjust to your desired 3D position
+    camera.rotation.set(0, 0, 0); // Reset rotation
+    controls.enableRotate = true; // Enable rotation for 3D
+    controls.enableZoom = true; // Optionally enable zoom
+    controls.update(); // Update controls
+    animate();
+}
+
+// Add event listeners to the buttons
+document.getElementById("switchTo2D").addEventListener("click", switchTo2D);
+document.getElementById("switchTo3D").addEventListener("click", switchTo3D);
+// Function to handle keyboard input for moving the selected object
+function onKeyDown(event) {
+    if (!selectedObject) return; // Only move if an object is selected
+    if (!isMoving) return; // Only move if currently in the moving state
+
+    const step = 1; // Define how much to move on each key press
+
+    switch (event.key) {
+        case 'ArrowUp': // Move up (Z-axis)
+            selectedObject.position.z -= step; // Move along the Z-axis
+            break;
+        case 'ArrowDown': // Move down (Z-axis)
+            selectedObject.position.z += step; // Move along the Z-axis
+            break;
+        case 'ArrowLeft': // Move left (X-axis)
+            selectedObject.position.x -= step; // Move along the X-axis
+            break;
+        case 'ArrowRight': // Move right (X-axis)
+            selectedObject.position.x += step; // Move along the X-axis
+            break;
+        case 'e': // End moving operation
+        case 'E':
+            isMoving = false; // Stop moving the object
+            console.log('Movement ended');
+            break;
+    }
+
+    // Ensure that the position is logged for debugging
+    console.log('Object Position:', selectedObject.position);
+}
+
+// Add event listener for keydown
+window.addEventListener('keydown', onKeyDown);
+// Handle the button click
+document.getElementById('addObjectBtn').addEventListener('click', () => {
+    openModal();
+    console.log('Object added to the scene');
+});
+// Handle the button click
+document.getElementById('closeObjectModal').addEventListener('click', () => {
+    closeModal();
+
+});
+// Animation loop
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+animate();
+
+// Handle window resize
+window.addEventListener('resize', function () {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});

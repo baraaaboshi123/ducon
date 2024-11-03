@@ -53,7 +53,7 @@
         <div class="flex items-center space-x-6">
             <!-- Properties Tool -->
             <div class="flex items-center space-x-2">
-                <button class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded border-r border-gray-500">
+                <button id="properties" class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded border-r border-gray-500">
                     <i class="fas fa-tools text-xl"></i>
                     Properties
                 </button>
@@ -237,7 +237,40 @@
     <!-- Container for displaying measurements -->
     <div id="measurementContainer" class="relative"></div>
 
-
+    <div id="propertiesModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full relative">
+            <!-- Close Button -->
+            <button id="closePropertiesModal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl font-bold">
+                &times;
+            </button>
+            
+            <!-- Modal Content -->
+            <h2 class="text-3xl font-semibold text-gray-800 mb-6 text-center">Object Properties</h2>
+    
+            <!-- Object Preview Image -->
+            <div class="flex justify-center mb-4">
+                <img id="objectImage" src="" alt="Object Preview" class="w-40 h-40 object-cover rounded-md shadow-md">
+            </div>
+    
+            <!-- Object Name -->
+            <div class="mb-4">
+                <h3 class="text-2xl font-medium text-gray-600">Name</h3>
+                <p id="objectName" class="text-gray-800 text-base text-2xl font-semibold"></p>
+            </div>
+    
+            <!-- Object Price -->
+            <div class="mb-6">
+                <h3 class="text-2xl font-medium text-gray-600">Price</h3>
+                <p id="objectPrice" class="text-gray-800 text-base text-2xl font-semibold"></p>
+            </div>
+    
+            <!-- Confirm Button -->
+            <button id="propConfirmBtn" class="w-full bg-blue-500 text-white font-medium py-2 rounded hover:bg-blue-600">
+                Confirm
+            </button>
+        </div>
+    </div>
+    
 
 
     <script type="module" src="./app.js"></script>

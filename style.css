@@ -95,3 +95,35 @@ button:focus-visible {
   }
 }
 
+#measurementContainer {
+  position: relative;
+  width: 100vw; /* or the specific width of the container */
+  height: 100vh; /* or the specific height of the container */
+  overflow: hidden; /* Ensure no elements extend out of bounds */
+}
+
+#measurementContainer.active {
+  display: block;
+  pointer-events: auto;
+}
+
+/* Style for the measurement line */
+.measurement-line {
+  position: absolute;
+  height: 3px; /* Increase line thickness for visibility */
+  background-color: red; /* Make sure it's a visible color */
+  z-index: 1000; /* Ensure it appears on top */
+  pointer-events: none;
+}
+
+/* Style for the distance label */
+.distance-label {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.7); /* Slight opacity for better readability */
+  color: white;
+  padding: 5px;
+  border-radius: 3px;
+  font-size: 14px;
+  z-index: 1000; /* Ensure it appears on top */
+  pointer-events: none;
+}

@@ -41,73 +41,82 @@
             <button id="addObjectBtn" class="text-xl bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded">
                 Add Object
             </button>
+           
         </div>
-
+    
         <!-- Centered Logo -->
         <div class="absolute left-1/2 transform -translate-x-1/2">
             <img src="./logo.png" alt="Logo" class="h-30 w-auto">
         </div>
-
+    
         <!-- Right Section -->
         <div class="flex items-center space-x-6">
-
             <!-- Properties Tool -->
             <div class="flex items-center space-x-2">
-                <button id=""
-                    class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded border-r border-gray-500">
+                <button class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded border-r border-gray-500">
                     <i class="fas fa-tools text-xl"></i>
                     Properties
                 </button>
             </div>
-
-            <!-- Separator -->
-            <span class="text-gray-400">|</span>
-
+    
+           
+    
             <!-- Distance Meter -->
             <div class="flex items-center space-x-2">
-                <button id=""
-                    class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-lg border-r border-gray-500">
+                <button id="measureButton" class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-lg border-r border-gray-500">
                     <i class="fas fa-ruler text-2xl"></i>
                     Distance
                 </button>
-
             </div>
-
             <!-- Separator -->
             <span class="text-gray-400">|</span>
-
+    
+            <!-- Distance Meter -->
+            <div class="flex items-center space-x-4">
+                 <!-- Lamp Icon Button -->
+            <button id="toggleColorButton" class="text-2xl bg-transparent text-yellow-100 hover:text-yellow-100">
+                <i class="fas fa-lightbulb"></i>
+            </button>
+             <!-- Grid Toggle Button -->
+        <button id="toggleGridButton" class="text-2xl bg-transparent hover:text-gray-400">
+            <i class="fas fa-th"></i> <!-- You can use an appropriate icon here -->
+        </button>
+            </div>
+    
+            <!-- Separator -->
+            <span class="text-gray-400">|</span>
+    
             <!-- 2D / 3D Switch Icons -->
             <div class="flex space-x-2 items-center">
-                <button id="switchTo2D"
-                    class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-l-lg border-r border-gray-500">
+                <button id="switchTo2D" class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-l-lg border-r border-gray-500">
                     2D
                 </button>
-                <button id="switchTo3D"
-                    class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-r-lg">
+                <button id="switchTo3D" class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-r-lg">
                     3D
                 </button>
             </div>
-
+    
             <!-- Separator -->
             <span class="text-gray-400">|</span>
-
+    
             <!-- Total Cost Display -->
             <div class="flex items-center space-x-2">
                 <span class="text-lg text-gray-400">Total Cost:</span>
                 <span id="totalCost" class="text-lg font-semibold text-white bg-gray-700 px-3 py-1 rounded">
-                    $0.00
+                    0.00 AED
                 </span>
             </div>
-
+    
             <!-- Separator -->
             <span class="text-gray-400">|</span>
-
+    
             <!-- POQ Button -->
             <button id="poqBtn" class="bg-gray-700 text-lg hover:bg-gray-600 text-white px-4 py-2 rounded">
-                POQ
+                BOQ
             </button>
         </div>
     </nav>
+    
 
 
 
@@ -115,16 +124,23 @@
     <!-- Texture Selection Modal -->
     <div id="textureModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
         <div class="bg-white p-6 rounded-md shadow-md">
-            <h2 class="text-xl font-bold mb-4">Select Ducon Pavers:</h2> <!-- select ducon walls: -->
+            <h2 class="text-xl font-bold mb-4">Select Ducon Walls:</h2> 
             <div id="textureList" class="grid grid-cols-3 gap-4"></div>
             <button id="closeModal" class="mt-4 bg-red-500 text-white px-4 py-2 rounded">Close</button>
+        </div>
+    </div>
+    <div id="textureModalPavers" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+        <div class="bg-white p-6 rounded-md shadow-md">
+            <h2 class="text-xl font-bold mb-4">Select Ducon Pavers:</h2> 
+            <div id="textureListPavers" class="grid grid-cols-3 gap-4"></div>
+            <button id="closeModalPavers" class="mt-4 bg-red-500 text-white px-4 py-2 rounded">Close</button>
         </div>
     </div>
     <!-- Modal Background -->
     <div id="objectModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
         <div class="bg-white p-6 rounded-lg max-w-3xl w-full">
             <div class="text-right">
-                <button id="closeObjectModal" class="text-red-500 font-bold">&times;</button>
+                <button id="closeObjectModal" class="text-red-500 text-2xl font-bold">&times;</button>
             </div>
             <h2 class="text-2xl font-bold mb-4">Select an Object</h2>
             <div id="objectGrid" class="grid grid-cols-3 gap-4"></div>
@@ -149,7 +165,7 @@
                     <img src="./logo.png" alt="Logo" class="mx-auto" style="width: 200px; height: 80px;">
 
                     <!-- Total Price aligned to the right -->
-                    <p class="mr-4 text-xl font-semibold">Total: $<span id="totalPrice"></span></p>
+                    <p class="mr-4 text-xl font-semibold">Total: <span id="totalPrice"> </span> AED</p>
                 </div>
                 <h2 class="text-center text-2xl font-bold mt-4">Invoice</h2>
             </div>
@@ -159,6 +175,7 @@
 
 
             <!-- Invoice Table -->
+            <h3 class="text-xl font-semibold mb-2">Objects</h3>
             <table class="w-full mb-6 border-collapse">
                 <thead>
                     <tr class="bg-gray-200 text-gray-700">
@@ -173,6 +190,42 @@
                 </tbody>
             </table>
 
+             <!-- Invoice Table for Floors -->
+        <h3 class="text-xl font-semibold mb-2">Floors</h3>
+        <table class="w-full mb-6 border-collapse">
+            <thead>
+                <tr class="bg-gray-200 text-gray-700">
+                    <th class="p-2 border">Floor ID</th>
+                    <th class="p-2 border">Texture</th>
+                    <th class="p-2 border">Area (m²)</th>
+                    <th class="p-2 border">Price per m²</th>
+                    <th class="p-2 border">Total Price</th>
+                </tr>
+            </thead>
+            <tbody id="floorTableBody">
+                <!-- Rows for floors will be added dynamically -->
+            </tbody>
+        </table>
+
+         <!-- Invoice Table for Walls -->
+         <h3 class="text-xl font-semibold mb-2">Walls</h3>
+         <table class="w-full mb-6 border-collapse">
+             <thead>
+                 <tr class="bg-gray-200 text-gray-700">
+                     <th class="p-2 border">Wall ID</th>
+                     <th class="p-2 border">Texture</th>
+                     <th class="p-2 border">Length</th>
+                     <th class="p-2 border">Height</th>
+                     <th class="p-2 border">Area (m²)</th>
+                     <th class="p-2 border">Price per m²</th>
+                     <th class="p-2 border">Total Price</th>
+                 </tr>
+             </thead>
+             <tbody id="wallTableBody">
+                 <!-- Rows for walls will be added dynamically -->
+             </tbody>
+         </table>
+
 
 
             <!-- Print Button -->
@@ -181,6 +234,8 @@
             </div>
         </div>
     </div>
+    <!-- Container for displaying measurements -->
+    <div id="measurementContainer" class="relative"></div>
 
 
 

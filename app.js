@@ -1158,7 +1158,7 @@ function onMouseClick(event) {
 
         textures.forEach((texture) => {
             const img = document.createElement('img');
-            img.src = `./public/images/walls/${texture}`;
+            img.src = `./public/images/${texture}`;
             img.classList.add('cursor-pointer', 'border', 'rounded', 'w-40', 'h-20');
             img.addEventListener('click', () => applyTexture(texture));
             textureList.appendChild(img);

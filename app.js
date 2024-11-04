@@ -92,7 +92,7 @@ function addLine(start, end) {
 // objects section ----------------------------------------------------------------------------
 
 // Global array to store loaded models
-const loadedModels = [];
+let loadedModels = [];
 // Load the GLTF model
 function loadModel(url, object) {
     const loader = new GLTFLoader();
@@ -480,6 +480,52 @@ document.getElementById("closePropertiesModal").addEventListener('click', () => 
 })
 //end propareties section ------------------------------------------------------------------------
 
+
+//submit modal section ---------------------------------------------------------------------------
+let originalClickHandler; // Store reference to original Three.js click handler
+function openModalSubmit() {
+    // Remove the Three.js click handler
+    originalClickHandler = document.onclick;
+    document.onclick = null;
+
+    // Show the modal and overlay
+    document.getElementById('designModal').classList.remove('hidden');
+
+    // Set focus to the modal content container
+    document.querySelector('#designModal .bg-white').focus();
+}
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+    openModalSubmit()
+
+});
+
+// Close modal
+document.getElementById('closeModalSubmit').addEventListener('click', () => {
+    // Hide the modal
+    document.getElementById('designModal').classList.add('hidden');
+
+    // Restore the original Three.js click handler
+    if (originalClickHandler) {
+        document.onclick = originalClickHandler;
+    }
+});
+
+// Form submission
+document.getElementById('designForm').addEventListener('submit', (e) => {
+    e.preventDefault(); // Prevent actual form submission
+
+    alert('Your design has been submitted successfully!'); // Notification
+    document.getElementById('designModal').classList.add('hidden');
+
+    // Restore the original Three.js click handler
+    if (originalClickHandler) {
+        document.onclick = originalClickHandler;
+    }
+    document.getElementById('designForm').reset(); // Reset form fields
+});
+
+//end submit modal section -----------------------------------------------------------------------
 
 // Get mouse position helper
 function getMousePosition1(event) {
@@ -879,6 +925,38 @@ function getMousePosition(event) {
     return { x: pos.x, z: pos.z };
 }
 
+
+function removeLineByPoints(scene, pointA, pointB) {
+    // Loop through each child in the scene (or a group containing lines)
+    scene.children.forEach((object) => {
+        // Check if the object is a line and has geometry
+        if (object.type === 'Line' && object.geometry) {
+            const lineGeometry = object.geometry;
+            const positions = lineGeometry.attributes.position.array;
+
+            // Retrieve the start and end points of the line
+            const start = new THREE.Vector3(positions[0], positions[1], positions[2]);
+            const end = new THREE.Vector3(positions[3], positions[4], positions[5]);
+
+            // Check if both points match in either order
+            const isMatchingLine =
+                (start.equals(pointA) && end.equals(pointB)) ||
+                (start.equals(pointB) && end.equals(pointA));
+
+            if (isMatchingLine) {
+                // Remove the line from the scene
+                scene.remove(object);
+
+                // Dispose of geometry and material
+                lineGeometry.dispose();
+                object.material.dispose();
+
+                console.log('Line removed from the scene.');
+            }
+        }
+    });
+}
+
 let obType = "";
 // Function to handle mouse clicks
 function onMouseClick(event) {
@@ -954,6 +1032,110 @@ function onMouseClick(event) {
             }
 
         }
+        return;
+    }
+
+    if (isDelete) {
+        const modelGroups = loadedModels.map(model => model.model).filter(obj => obj instanceof THREE.Group);
+        // Calculate mouse position in normalized device coordinates (-1 to +1)
+        let mouse2 = new THREE.Vector2();
+        mouse2.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse2.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        let raycaster2 = new THREE.Raycaster();
+        raycaster2.setFromCamera(mouse2, camera);
+
+        // Check the polygons array for valid extrudedObjects
+        const validPolygons = polygons
+            .filter(p => p.extrudedObject !== null)
+            .map(p => p.extrudedObject);
+
+        const validWalls = walls
+            .filter(w => w.extrudedObject !== null)
+            .map(w => w.extrudedObject);
+        // Combine both validPolygons and modelObjects
+        const objectsToCheck = [...validPolygons, ...modelGroups, ...validWalls]
+            .filter(obj => {
+                if (obj && typeof obj === 'object' && 'layers' in obj) {
+                    console.log("Object passed filter:", obj);
+                    return true;
+                } else {
+                    console.log("Object failed filter:", obj);
+                    return false;
+                }
+            });
+
+
+        // Intersect with the combined array of validPolygons and modelObjects
+        let intersects2 = raycaster2.intersectObjects(objectsToCheck, true);
+        console.log(intersects2)
+        if (intersects2.length > 0) {
+            selectedObject = intersects2[0].object.parent; // Store the selected object
+            obType = 'Object'
+            if (selectedObject.type === 'Scene') {
+
+                selectedObject = intersects2[0].object;
+            }
+            console.log('Selected Object:', selectedObject.uuid);
+            let propModel;
+            loadedModels.forEach(model => {
+                if (model.model.uuid === selectedObject.uuid)
+                    propModel = model;
+            })
+            if (propModel == undefined) {
+                polygons.forEach(p => {
+                    if (p.extrudedObject.uuid === selectedObject.uuid) {
+                        obType = 'Floor';
+                        propModel = p;
+                    }
+                })
+            }
+
+            if (propModel == undefined) {
+                walls.forEach(w => {
+                    if (w.extrudedObject.uuid === selectedObject.uuid) {
+                        obType = 'Wall';
+                        propModel = w;
+                    }
+                })
+            }
+            console.log("selected model: ", propModel)
+
+            if (propModel) {
+                let object;
+                console.log(propModel)
+                if (obType === 'Object')
+                    object = scene.getObjectByProperty('uuid', propModel.model.uuid)
+                else
+                    object = scene.getObjectByProperty('uuid', propModel.extrudedObject.uuid);
+
+                // If the object exists, remove it from the scene
+                if (object) {
+                    if (obType === 'Object') {
+                        loadedModels = loadedModels.filter(model => model.model.uuid !== selectedObject.uuid);
+                    }
+                    else if (obType === 'Floor') {
+                        polygons = polygons.filter(p => p.extrudedObject.uuid !== selectedObject.uuid);
+                    }
+                    else if (obType === 'Wall') {
+                        walls = walls.filter(w => w.extrudedObject.uuid !== selectedObject.uuid);
+                    }
+                    removeAllLines(scene)
+                    scene.remove(object);
+                    if (obType != 'Object') {
+                        object.geometry.dispose(); // Dispose of geometry to free up memory
+                        object.material.dispose(); // Dispose of material to free up memory
+                    }
+                    isDelete = false;
+                    document.body.style.cursor = 'default'; // Change cursor
+                    calculateTotalPrice();
+                    return;
+                }
+            }
+
+        }
+
+
         return;
     }
 
@@ -1086,6 +1268,25 @@ function onMouseClick(event) {
     }
 }
 
+function removeAllLines(scene) {
+    // Loop through each child in the scene in reverse, to safely remove while iterating
+    for (let i = scene.children.length - 1; i >= 0; i--) {
+        const object = scene.children[i];
+
+        // Check if the object is a line
+        if (object.type === 'Line' || (object.type === 'Mesh' && object.geometry.type === 'SphereGeometry') ||
+            object.type === 'ArrowHelper') {
+            // Remove the line from the scene
+            scene.remove(object);
+
+            // Dispose of geometry and material
+            if (object.geometry) object.geometry.dispose();
+            if (object.material) object.material.dispose();
+        }
+    }
+    console.log('All lines removed from the scene.');
+}
+
 function createTextTexture(text) {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
@@ -1167,6 +1368,7 @@ function onMouseMove(event) {
     if (currentPolygon.closed) {
         if (currentPolygon.tempLine) {
             scene.remove(currentPolygon.tempLine);
+            scene.remove(lengthLabel)
             currentPolygon.tempLine = null;
         }
     }
@@ -1321,11 +1523,16 @@ function showTextureModal() {
     const textures = ['Wall-Decado-Dune_BaseColor.png', 'Wall-Decado-Hazel_BaseColor.png', 'Wall-Decado-Iris_BaseColor.png', 'Wall-Decado-Nebula_BaseColor.png', 'Wall-Decado-RoastBrown_BaseColor.png']; // Add your texture file names here
 
     textures.forEach((texture) => {
+        const div = document.createElement('div');
         const img = document.createElement('img');
+        const p = document.createElement('p');
+        p.innerText = texture.slice(0, -4);
         img.src = `/images/walls/${texture}`;
-        img.classList.add('cursor-pointer', 'border', 'rounded', 'w-40', 'h-20');
+        img.classList.add('cursor-pointer', 'border', 'rounded', 'w-60', 'h-20');
         img.addEventListener('click', () => applyTexture(texture));
-        textureList.appendChild(img);
+        div.appendChild(img)
+        div.appendChild(p)
+        textureList.appendChild(div);
     });
 
     document.getElementById('closeModal').addEventListener('click', () => {
@@ -1343,17 +1550,30 @@ function showTextureModalPavers() {
     const textures = ['PebblesBlack_BaseColor.png', 'TerentoHazel_BaseColor.png', 'TerentoSlate_BaseColor.png', 'VillagioSlate_BaseColor.png', 'VillagioTerra_BaseColor.png']; // Add your texture file names here
 
     textures.forEach((texture) => {
+        const div = document.createElement('div');
         const img = document.createElement('img');
+        const p = document.createElement('p');
+        p.innerText = texture.slice(0, -4);
         img.src = `/images/pavers/${texture}`;
-        img.classList.add('cursor-pointer', 'border', 'rounded', 'w-40', 'h-20');
+        img.classList.add('cursor-pointer', 'border', 'rounded', 'w-60', 'h-20');
         img.addEventListener('click', () => applyTexturePavers(texture));
-        textureList.appendChild(img);
+        div.appendChild(img)
+        div.appendChild(p)
+        textureList.appendChild(div);
     });
 
     document.getElementById('closeModalPavers').addEventListener('click', () => {
         modal.classList.add('hidden'); // Close the modal
     });
 }
+
+
+// handle delete element
+let isDelete = false;
+document.getElementById('delete').addEventListener('click', () => {
+    isDelete = true;
+    document.body.style.cursor = 'url(/images/cross-mark.png), auto'; // Change cursor
+});
 
 
 // Handle right-click on any 3D object

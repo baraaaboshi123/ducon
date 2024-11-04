@@ -32,73 +32,168 @@
     <nav class="bg-gray-800 p-8 fixed top-0 left-0 w-full flex items-center justify-between text-white">
         <!-- Buttons on the Left -->
         <div class="flex space-x-4 items-center">
-            <button id="toggleDrawButton" class="text-xl bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-                Model Floor
-            </button>
-            <button id="add-wall-btn" class="text-xl bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
-                Model Wall
-            </button>
-            <button id="addObjectBtn" class="text-xl bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded">
-                Add Object
-            </button>
-           
+            <div class="group relative w-max">
+                <button id="toggleDrawButton"
+                    class="text-lg bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    Model Floor
+                </button>
+                <span
+                    class="pointer-events-none absolute -bottom-10 bg-white text-black left-0 px-2 w-max opacity-0 transition-opacity group-hover:opacity-100">
+                    Model Floor.
+                </span>
+            </div>
+            <div class="group relative w-max">
+                <button id="add-wall-btn" class="text-lg bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                    Model Wall
+                </button>
+                <span
+                    class="pointer-events-none absolute -bottom-10 bg-white text-black left-0 px-2 w-max opacity-0 transition-opacity group-hover:opacity-100">
+                    Model Wall.
+                </span>
+            </div>
+
+            <div class="group relative w-max">
+                <button id="addObjectBtn"
+                    class="text-lg bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded">
+                    Add Object
+                </button>
+                <span
+                    class="pointer-events-none absolute -bottom-10 bg-white text-black left-0 px-2 w-max opacity-0 transition-opacity group-hover:opacity-100">
+                    Add Object.
+                </span>
+            </div>
+
+            <!-- Separator -->
+            <span class="text-gray-400">|</span>
+
+            <div class="group relative w-max">
+
+                <button id="saveBtn" class="text-lg bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">
+                    <i class="fa-regular fa-floppy-disk"></i>
+                    Save
+                </button>
+                <span
+                    class="pointer-events-none absolute -bottom-10 bg-white text-black left-0 px-2 w-max opacity-0 transition-opacity group-hover:opacity-100">
+                    Save.
+                </span>
+            </div>
+
+            <!-- Separator -->
+            <span class="text-gray-400">|</span>
+
+            <div class="group relative w-max">
+                <!-- trash Icon Button -->
+                <button id="delete" class="text-2xl bg-transparent text-red-400 hover:text-red-600">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+                <span
+                    class="pointer-events-none absolute -bottom-10 bg-white text-black left-0 w-max opacity-0 transition-opacity group-hover:opacity-100">
+                    Delete element.
+                </span>
+            </div>
+
+
+
+
         </div>
-    
+
         <!-- Centered Logo -->
         <div class="absolute left-1/2 transform -translate-x-1/2">
             <img src="./logo.png" alt="Logo" class="h-30 w-auto">
         </div>
-    
+
         <!-- Right Section -->
-        <div class="flex items-center space-x-6">
+        <div class="flex items-center space-x-2">
             <!-- Properties Tool -->
-            <div class="flex items-center space-x-2">
-                <button id="properties" class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded border-r border-gray-500">
-                    <i class="fas fa-tools text-xl"></i>
-                    Properties
-                </button>
+            <div class="flex items-center space-x-1">
+                <div class="group relative w-max">
+                    <button id="properties"
+                        class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-2 py-2 rounded border-r border-gray-500">
+                        <i class="fas fa-tools text-xl"></i>
+                        Properties
+                    </button>
+                    <span
+                        class="pointer-events-none absolute -bottom-10 bg-white text-black left-0 w-max opacity-0 transition-opacity group-hover:opacity-100">
+                        Properties tool, Click on any object to show its properties.
+                    </span>
+                </div>
             </div>
-    
-           
-    
+
+
+
             <!-- Distance Meter -->
-            <div class="flex items-center space-x-2">
-                <button id="measureButton" class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-lg border-r border-gray-500">
-                    <i class="fas fa-ruler text-2xl"></i>
-                    Distance
-                </button>
+            <div class="flex items-center space-x-1">
+                <div class="group relative w-max">
+                    <button id="measureButton"
+                        class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-2 py-2 rounded-lg border-r border-gray-500">
+                        <i class="fas fa-ruler text-xl"></i>
+                        Distance
+                    </button>
+                    <span
+                        class="pointer-events-none absolute -bottom-10 bg-white text-black left-0 w-max opacity-0 transition-opacity group-hover:opacity-100">
+                        Distance tool, Click twice to measure distance between points.
+                    </span>
+                </div>
             </div>
             <!-- Separator -->
             <span class="text-gray-400">|</span>
-    
-            <!-- Distance Meter -->
+
             <div class="flex items-center space-x-4">
-                 <!-- Lamp Icon Button -->
-            <button id="toggleColorButton" class="text-2xl bg-transparent text-yellow-100 hover:text-yellow-100">
-                <i class="fas fa-lightbulb"></i>
-            </button>
-             <!-- Grid Toggle Button -->
-        <button id="toggleGridButton" class="text-2xl bg-transparent hover:text-gray-400">
-            <i class="fas fa-th"></i> <!-- You can use an appropriate icon here -->
-        </button>
+                <div class="group relative w-max">
+                    <!-- Lamp Icon Button -->
+                    <button id="toggleColorButton"
+                        class="text-2xl bg-transparent text-yellow-100 hover:text-yellow-100">
+                        <i class="fas fa-lightbulb"></i>
+                    </button>
+                    <span
+                        class="pointer-events-none absolute -bottom-10 bg-white text-black left-0 w-max opacity-0 transition-opacity group-hover:opacity-100">
+                        On/Off Dark mode.
+                    </span>
+                </div>
+                <div class="group relative w-max">
+                    <!-- Grid Toggle Button -->
+                    <button id="toggleGridButton" class="text-2xl bg-transparent hover:text-gray-400">
+                        <i class="fas fa-th"></i> <!-- You can use an appropriate icon here -->
+                    </button>
+                    <span
+                        class="pointer-events-none absolute -bottom-10 bg-white text-black left-0 w-max opacity-0 transition-opacity group-hover:opacity-100">
+                        On/Off Grid.
+                    </span>
+                </div>
             </div>
-    
+
             <!-- Separator -->
             <span class="text-gray-400">|</span>
-    
+
             <!-- 2D / 3D Switch Icons -->
             <div class="flex space-x-2 items-center">
-                <button id="switchTo2D" class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-l-lg border-r border-gray-500">
-                    2D
-                </button>
-                <button id="switchTo3D" class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-r-lg">
-                    3D
-                </button>
+                <div class="group relative w-max">
+                    <button id="switchTo2D"
+                        class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-l-lg border-r border-gray-500">
+                        2D
+                    </button>
+                    <span
+                        class="pointer-events-none absolute -bottom-10 bg-white text-black left-0 w-max opacity-0 transition-opacity group-hover:opacity-100">
+                        Switch to 2D view.
+                    </span>
+                </div>
+
+                <div class="group relative w-max">
+                    <button id="switchTo3D"
+                        class="bg-gray-700 hover:bg-gray-600 text-white font-medium px-4 py-2 rounded-r-lg">
+                        3D
+                    </button>
+                    <span
+                        class="pointer-events-none absolute -bottom-10 bg-white text-black left-0 w-max opacity-0 transition-opacity group-hover:opacity-100">
+                        Switch to 3D view.
+                    </span>
+                </div>
+
             </div>
-    
+
             <!-- Separator -->
             <span class="text-gray-400">|</span>
-    
+
             <!-- Total Cost Display -->
             <div class="flex items-center space-x-2">
                 <span class="text-lg text-gray-400">Total Cost:</span>
@@ -106,17 +201,23 @@
                     0.00 AED
                 </span>
             </div>
-    
+
             <!-- Separator -->
             <span class="text-gray-400">|</span>
-    
-            <!-- POQ Button -->
-            <button id="poqBtn" class="bg-gray-700 text-lg hover:bg-gray-600 text-white px-4 py-2 rounded">
-                BOQ
-            </button>
+            <div class="group relative w-max">
+                <!-- POQ Button -->
+                <button id="poqBtn" class="bg-gray-700 text-lg hover:bg-gray-600 text-white px-4 py-2 rounded">
+                    BOQ
+                </button>
+                <span
+                    class="pointer-events-none absolute -bottom-10 bg-white text-black right-2 w-max opacity-0 transition-opacity group-hover:opacity-100">
+                    Open BOQ invoice.
+                </span>
+            </div>
+
         </div>
     </nav>
-    
+
 
 
 
@@ -124,14 +225,14 @@
     <!-- Texture Selection Modal -->
     <div id="textureModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
         <div class="bg-white p-6 rounded-md shadow-md">
-            <h2 class="text-xl font-bold mb-4">Select Ducon Walls:</h2> 
+            <h2 class="text-xl font-bold mb-4">Select Ducon Walls:</h2>
             <div id="textureList" class="grid grid-cols-3 gap-4"></div>
             <button id="closeModal" class="mt-4 bg-red-500 text-white px-4 py-2 rounded">Close</button>
         </div>
     </div>
     <div id="textureModalPavers" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
         <div class="bg-white p-6 rounded-md shadow-md">
-            <h2 class="text-xl font-bold mb-4">Select Ducon Pavers:</h2> 
+            <h2 class="text-xl font-bold mb-4">Select Ducon Pavers:</h2>
             <div id="textureListPavers" class="grid grid-cols-3 gap-4"></div>
             <button id="closeModalPavers" class="mt-4 bg-red-500 text-white px-4 py-2 rounded">Close</button>
         </div>
@@ -190,41 +291,41 @@
                 </tbody>
             </table>
 
-             <!-- Invoice Table for Floors -->
-        <h3 class="text-xl font-semibold mb-2">Floors</h3>
-        <table class="w-full mb-6 border-collapse">
-            <thead>
-                <tr class="bg-gray-200 text-gray-700">
-                    <th class="p-2 border">Floor ID</th>
-                    <th class="p-2 border">Texture</th>
-                    <th class="p-2 border">Area (m²)</th>
-                    <th class="p-2 border">Price per m²</th>
-                    <th class="p-2 border">Total Price</th>
-                </tr>
-            </thead>
-            <tbody id="floorTableBody">
-                <!-- Rows for floors will be added dynamically -->
-            </tbody>
-        </table>
+            <!-- Invoice Table for Floors -->
+            <h3 class="text-xl font-semibold mb-2">Floors</h3>
+            <table class="w-full mb-6 border-collapse">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-700">
+                        <th class="p-2 border">Floor ID</th>
+                        <th class="p-2 border">Texture</th>
+                        <th class="p-2 border">Area (m²)</th>
+                        <th class="p-2 border">Price per m²</th>
+                        <th class="p-2 border">Total Price</th>
+                    </tr>
+                </thead>
+                <tbody id="floorTableBody">
+                    <!-- Rows for floors will be added dynamically -->
+                </tbody>
+            </table>
 
-         <!-- Invoice Table for Walls -->
-         <h3 class="text-xl font-semibold mb-2">Walls</h3>
-         <table class="w-full mb-6 border-collapse">
-             <thead>
-                 <tr class="bg-gray-200 text-gray-700">
-                     <th class="p-2 border">Wall ID</th>
-                     <th class="p-2 border">Texture</th>
-                     <th class="p-2 border">Length</th>
-                     <th class="p-2 border">Height</th>
-                     <th class="p-2 border">Area (m²)</th>
-                     <th class="p-2 border">Price per m²</th>
-                     <th class="p-2 border">Total Price</th>
-                 </tr>
-             </thead>
-             <tbody id="wallTableBody">
-                 <!-- Rows for walls will be added dynamically -->
-             </tbody>
-         </table>
+            <!-- Invoice Table for Walls -->
+            <h3 class="text-xl font-semibold mb-2">Walls</h3>
+            <table class="w-full mb-6 border-collapse">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-700">
+                        <th class="p-2 border">Wall ID</th>
+                        <th class="p-2 border">Texture</th>
+                        <th class="p-2 border">Length</th>
+                        <th class="p-2 border">Height</th>
+                        <th class="p-2 border">Area (m²)</th>
+                        <th class="p-2 border">Price per m²</th>
+                        <th class="p-2 border">Total Price</th>
+                    </tr>
+                </thead>
+                <tbody id="wallTableBody">
+                    <!-- Rows for walls will be added dynamically -->
+                </tbody>
+            </table>
 
 
 
@@ -240,37 +341,65 @@
     <div id="propertiesModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full relative">
             <!-- Close Button -->
-            <button id="closePropertiesModal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl font-bold">
+            <button id="closePropertiesModal"
+                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl font-bold">
                 &times;
             </button>
-            
+
             <!-- Modal Content -->
             <h2 class="text-3xl font-semibold text-gray-800 mb-6 text-center">Object Properties</h2>
-    
+
             <!-- Object Preview Image -->
             <div class="flex justify-center mb-4">
                 <img id="objectImage" src="" alt="Object Preview" class="w-40 h-40 object-cover rounded-md shadow-md">
             </div>
-    
+
             <!-- Object Name -->
             <div class="mb-4">
                 <h3 class="text-2xl font-medium text-gray-600">Name</h3>
                 <p id="objectName" class="text-gray-800 text-base text-2xl font-semibold"></p>
             </div>
-    
+
             <!-- Object Price -->
             <div class="mb-6">
                 <h3 class="text-2xl font-medium text-gray-600">Price</h3>
                 <p id="objectPrice" class="text-gray-800 text-base text-2xl font-semibold"></p>
             </div>
-    
+
             <!-- Confirm Button -->
-            <button id="propConfirmBtn" class="w-full bg-blue-500 text-white font-medium py-2 rounded hover:bg-blue-600">
+            <button id="propConfirmBtn"
+                class="w-full bg-blue-500 text-white font-medium py-2 rounded hover:bg-blue-600">
                 Confirm
             </button>
         </div>
     </div>
-    
+
+
+    <!-- Submit Design Modal -->
+    <div id="designModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[9999] flex justify-center items-center">
+        <div class="bg-white p-6 rounded-md shadow-md w-80" tabindex="0">
+            <h2 class="text-xl font-bold mb-4">Submit Your Design</h2>
+            <form id="designForm" class="space-y-4">
+                <input type="text" id="fullName" placeholder="Full Name" class="w-full px-4 py-2 border rounded-md"
+                    required />
+                <input type="text" id="address" placeholder="Address" class="w-full px-4 py-2 border rounded-md"
+                    required />
+                <input type="tel" id="phoneNumber" placeholder="Phone Number" class="w-full px-4 py-2 border rounded-md"
+                    required />
+                <input type="email" id="email" placeholder="Email" class="w-full px-4 py-2 border rounded-md"
+                    required />
+                <button type="submit" class="w-full bg-blue-500 text-white px-4 py-2 rounded-md">
+                    Submit
+                </button>
+            </form>
+            <button id="closeModalSubmit" class="mt-4 w-full bg-red-500 text-white px-4 py-2 rounded-md"
+                onclick="closeModal()">
+                Close
+            </button>
+        </div>
+    </div>
+
+
 
 
     <script type="module" src="./app.js"></script>
